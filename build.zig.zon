@@ -1,0 +1,8 @@
+.{
+    .name = "SpaceInvaders",
+    .version = "0.0.1",
+    .dependencies = .{
+        .@"raylib-zig" = .{ .url = "https://github.com/Not-Nik/raylib-zig/archive/devel.tar.gz", .hash = "1220d5a31c78da247aaee092be682e3374628dbad1ab631d72df00074c35c61a6bf4" },
+    },
+    .paths = .{""},
+}
