@@ -50,7 +50,7 @@ pub const GameState = struct {
 
             for (self.alien_horde.aliens.items, 0..) |*alien, i| {
                 if (alien.living_status == utils.LivingStatus.Alive and utils.closeEnough(&alien.position, &projectile.position)) {
-                    alien.living_status = utils.LivingStatus.Dead;
+                    alien.living_status = utils.LivingStatus{ .Dying = 0 };
                     projectile.living_status = utils.LivingStatus.Dead;
 
                     if (i / 11 == 4) {

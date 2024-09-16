@@ -4,8 +4,7 @@ const std = @import("std");
 const Projectile = @import("projectile.zig").Projectile;
 
 const Alien = struct {
-    const sprite_size: struct { width: f32, height: f32 } = .{ .width = 33, .height = 24 };
-    const ALIEN_BUFFER: [16][11]u8 = .{
+    const ALIEN_BUFFER: [24][11]u8 = .{
         [_]u8{ 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0 },
         [_]u8{ 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 },
         [_]u8{ 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0 },
@@ -23,8 +22,18 @@ const Alien = struct {
         [_]u8{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
         [_]u8{ 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0 },
         [_]u8{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0 },
+
+        [_]u8{ 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0 },
+        [_]u8{ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0 },
+        [_]u8{ 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1 },
+        [_]u8{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0 },
+        [_]u8{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0 },
+        [_]u8{ 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1 },
+        [_]u8{ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0 },
+        [_]u8{ 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0 },
     };
 
+    const sprite_size: struct { width: f32, height: f32 } = .{ .width = 33, .height = 24 };
     position: rl.Vector2,
     texture: rl.Texture2D,
 
@@ -35,17 +44,17 @@ const Alien = struct {
     living_status: utils.LivingStatus = utils.LivingStatus.Alive,
 
     pub fn init(position: rl.Vector2) Alien {
-        var image = rl.genImageColor(11, 16, rl.Color.blank);
+        var image = rl.genImageColor(11, 24, rl.Color.blank);
 
-        for (0..16) |row| {
+        for (0..24) |row| {
             for (0..11) |col| {
                 if (ALIEN_BUFFER[row][col] == 1) {
-                    rl.imageDrawPixel(&image, @as(i32, @intCast(col)), @as(i32, @intCast(row)), rl.Color.black);
+                    rl.imageDrawPixel(&image, @as(i32, @intCast(col)), @as(i32, @intCast(row)), rl.Color.red);
                 }
             }
         }
 
-        rl.imageResizeNN(&image, sprite_size.width, sprite_size.height * 2);
+        rl.imageResizeNN(&image, sprite_size.width, Alien.height * 3);
 
         const texture = rl.loadTextureFromImage(image);
 
@@ -58,6 +67,17 @@ const Alien = struct {
     pub fn update(self: *Alien, direction: utils.Direction) void {
         self.sprite_frame = (self.sprite_frame + 1) % 2;
 
+        switch (self.living_status) {
+            .Dying => |v| {
+                if (v >= 1) {
+                    self.living_status = .Dead;
+                } else {
+                    self.living_status.Dying = v + 1;
+                }
+            },
+            else => {},
+        }
+
         switch (direction) {
             utils.Direction.Up => self.position.y -= self.speed,
             utils.Direction.Down => self.position.y += self.speed,
@@ -67,10 +87,16 @@ const Alien = struct {
     }
 
     pub fn render(self: *Alien) void {
-        const roi = rl.Rectangle
-            .init(0, @as(f32, @floatFromInt(self.sprite_frame)) * Alien.sprite_size.height, Alien.sprite_size.width, Alien.sprite_size.height);
+        var sprite_frame = self.sprite_frame;
 
-        rl.drawTextureRec(self.texture, roi, self.position, rl.Color.blue);
+        if (self.living_status == utils.LivingStatus.Dying) {
+            sprite_frame = 2;
+        }
+
+        const roi = rl.Rectangle
+            .init(0, @as(f32, @floatFromInt(sprite_frame)) * Alien.sprite_size.height, Alien.sprite_size.width, Alien.sprite_size.height);
+
+        rl.drawTextureRec(self.texture, roi, self.position, rl.Color.red);
     }
 };
 
@@ -103,7 +129,7 @@ pub const AlienHorde = struct {
 
     pub fn render(self: *AlienHorde) void {
         for (self.aliens.items) |*alien| {
-            if (alien.living_status == utils.LivingStatus.Alive) {
+            if (alien.living_status != utils.LivingStatus.Dead) {
                 alien.render();
             }
         }
@@ -125,7 +151,7 @@ pub const AlienHorde = struct {
 
         if (self.ctx.counter < 11 or self.aliens.items[self.ctx.counter - 11].living_status == utils.LivingStatus.Dead) {
             if (self.shooting_ctx.counter == self.shooting_ctx.shooter) {
-                try self.projectiles.append(Projectile.init(current_alien.position, utils.Direction.Down));
+                try self.projectiles.append(Projectile.init(utils.addVec(&current_alien.position, &rl.Vector2.init((Alien.sprite_size.width / 2), 0)), utils.Direction.Down));
             }
 
             self.shooting_ctx.counter += 1;

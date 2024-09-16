@@ -19,7 +19,7 @@ pub const Direction = enum {
     }
 };
 
-pub const LivingStatus = enum { Alive, Dead };
+pub const LivingStatus = union(enum) { Alive: void, Dead: void, Dying: u32 };
 
 pub const ShootingStatus = enum { Shooting, NotShooting };
 

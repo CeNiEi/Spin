@@ -34,7 +34,7 @@ pub const Ship = struct {
         for (0..7) |row| {
             for (0..11) |col| {
                 if (SHIP_BUFFER[row][col] == 1) {
-                    rl.imageDrawPixel(&image, @as(i32, @intCast(col)), @as(i32, @intCast(row)), rl.Color.black);
+                    rl.imageDrawPixel(&image, @as(i32, @intCast(col)), @as(i32, @intCast(row)), rl.Color.green);
                 }
             }
         }
@@ -51,7 +51,7 @@ pub const Ship = struct {
     }
 
     pub fn render(self: *Ship) void {
-        rl.drawTextureV(self.texture, self.position, rl.Color.blue);
+        rl.drawTextureV(self.texture, self.position, rl.Color.green);
 
         for (self.projectiles.items) |*projectile| {
             if (projectile.living_status == utils.LivingStatus.Alive) {
@@ -75,7 +75,7 @@ pub const Ship = struct {
         };
 
         if (self.shooting_status == utils.ShootingStatus.Shooting) {
-            try self.projectiles.append(Projectile.init(self.position, utils.Direction.Up));
+            try self.projectiles.append(Projectile.init(utils.addVec(&self.position, &rl.Vector2.init((sprite_size.width / 2), 0)), utils.Direction.Up));
         }
 
         for (self.projectiles.items) |*projectile| {
